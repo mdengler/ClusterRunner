@@ -75,12 +75,10 @@ def _calculate_source_version():
 
     if _calculated_version is None:
         # Do the version calculation by counting number of commits in the git repo.
-        commit_count_output = subprocess.check_output(
-            ['git rev-list HEAD | wc -l'],
-            shell=True,
-            universal_newlines=True,
-            cwd=os.path.dirname(__file__),
-        )
+        p1 = subprocess.Popen(["git", "rev-list",  "HEAD"], stdout=subprocess.PIPE)
+        p2 = subprocess.Popen(["wc", "-l"], stdin=p1.stdout, stdout=subprocess.PIPE)
+        p1.stdout.close()  # Allow p1 to receive a SIGPIPE if p2 exits.
+        commit_count_output = p2.communicate()[0]
         try:
             patch_version = int(commit_count_output)  # Cast to int to verify output of command was actually a number.
         except TypeError:
